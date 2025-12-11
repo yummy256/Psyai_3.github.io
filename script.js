@@ -49,9 +49,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 滚动到底部
     scrollToBottom();
-    
-    // 添加批量删除按钮
-    addBatchDeleteButton();
 });
 
 // --- 工具函数 ---
@@ -60,7 +57,9 @@ function formatTime(time) {
     return new Date(time).toLocaleString();
 }
 
-// 情感分析（基于关键词）
+// 模拟情感分析
+// --- 工具函数 ---
+// 情感关键词分析（简单实现）
 function analyzeEmotion(content) {
     content = content.toLowerCase();
     
@@ -112,7 +111,6 @@ function analyzeEmotion(content) {
 
     return emotion;
 }
-
 // 计算情感占比
 function calculateEmotionRatio(emotion) {
     if (emotionData.length === 0) return 0;
@@ -198,6 +196,7 @@ function switchView(view) {
 }
 
 // 渲染消息列表
+// 渲染消息列表
 function renderMessages() {
     // 清空现有消息（保留欢迎消息）
     const welcomeMsg = chatMessages.querySelector('.ai-message');
@@ -271,11 +270,7 @@ function renderHistoryList() {
     historySessions.forEach((session, index) => {
         const itemEl = document.createElement('div');
         itemEl.className = 'history-item';
-        itemEl.dataset.index = index;
 
-        const contentEl = document.createElement('div');
-        contentEl.className = 'history-item-content';
-        
         const timeEl = document.createElement('div');
         timeEl.className = 'session-time';
         timeEl.textContent = formatTime(session.createTime);
@@ -283,76 +278,24 @@ function renderHistoryList() {
         const previewEl = document.createElement('div');
         previewEl.className = 'session-preview';
         previewEl.textContent = session.messages[0]?.content || '空会话';
-        
-        const messageCountEl = document.createElement('div');
-        messageCountEl.className = 'session-count';
-        messageCountEl.textContent = `共 ${session.messages.length} 条消息`;
 
-        const btnContainer = document.createElement('div');
-        btnContainer.className = 'history-item-buttons';
-
-        const restoreBtn = document.createElement('button');
-        restoreBtn.className = 'restore-btn';
-        restoreBtn.textContent = '恢复';
-        restoreBtn.onclick = function (e) {
-            e.stopPropagation();
+        const btnEl = document.createElement('button');
+        btnEl.className = 'restore-btn';
+        btnEl.textContent = '恢复会话';
+        btnEl.onclick = function () {
             restoreSession(index);
         };
 
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'delete-btn';
-        deleteBtn.innerHTML = '🗑️';
-        deleteBtn.title = '删除此历史记录';
-        deleteBtn.onclick = function (e) {
-            e.stopPropagation();
-            deleteSession(index);
-        };
-
         // 组装
+        const contentEl = document.createElement('div');
         contentEl.appendChild(timeEl);
         contentEl.appendChild(previewEl);
-        contentEl.appendChild(messageCountEl);
-        
-        btnContainer.appendChild(restoreBtn);
-        btnContainer.appendChild(deleteBtn);
-        
+
         itemEl.appendChild(contentEl);
-        itemEl.appendChild(btnContainer);
+        itemEl.appendChild(btnEl);
 
         historyList.appendChild(itemEl);
     });
-}
-
-// 删除历史会话
-function deleteSession(index) {
-    if (confirm('确定要删除这条历史记录吗？')) {
-        historySessions.splice(index, 1);
-        localStorage.setItem('historySessions', JSON.stringify(historySessions));
-        renderHistoryList();
-    }
-}
-
-// 添加批量删除按钮到历史记录视图
-function addBatchDeleteButton() {
-    const historyView = document.querySelector('.history-view');
-    if (!historyView.querySelector('.batch-delete-btn')) {
-        const batchDeleteBtn = document.createElement('button');
-        batchDeleteBtn.className = 'batch-delete-btn';
-        batchDeleteBtn.textContent = '清空所有历史记录';
-        batchDeleteBtn.onclick = clearAllHistory;
-        historyView.insertBefore(batchDeleteBtn, historyView.querySelector('#historyList'));
-    }
-}
-
-// 清空所有历史记录
-function clearAllHistory() {
-    if (historySessions.length === 0) return;
-    
-    if (confirm('确定要清空所有历史记录吗？此操作不可恢复！')) {
-        historySessions = [];
-        localStorage.setItem('historySessions', JSON.stringify(historySessions));
-        renderHistoryList();
-    }
 }
 
 // --- 聊天核心功能 ---
@@ -378,7 +321,7 @@ async function sendMessage() {
 
     // 2. 渲染消息并滚动到底部
     renderMessages();
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await new Promise(resolve => setTimeout(resolve, 0)); // 模拟nextTick
     scrollToBottom();
 
     // 3. 显示加载动画
@@ -451,7 +394,7 @@ function clearChat() {
     renderMessages();
     renderHistoryList();
     updateEmotionDOM();
-    updateEmojiDisplay();
+    updateEmojiDisplay(); // 清空后更新emoji
 
     // 滚动到底部
     scrollToBottom();
@@ -467,12 +410,12 @@ function restoreSession(index) {
     const recentEmotions = emotionData.slice(-3);
     const count = {};
     recentEmotions.forEach(e => count[e] = (count[e] || 0) + 1);
-    currentEmotion = Object.keys(count).sort((a, b) => count[b] - count[a])[0] || '中性';
+    currentEmotion = Object.keys(count).sort((a, b) => count[b] - count[a])[0];
     lastMessageEmotion = emotionData[emotionData.length - 1] || '中性';
 
     // 更新DOM
     updateEmotionDOM();
-    updateEmojiDisplay();
+    updateEmojiDisplay(); // 恢复后更新emoji
     renderMessages();
 
     // 切换到对话视图
@@ -501,6 +444,7 @@ function startVoiceInput() {
     recognition.onresult = function (event) {
         const transcript = event.results[0][0].transcript;
         inputMessage.value = transcript;
+        // 更新字数统计和按钮状态
         document.getElementById('wordCount').textContent = transcript.length + '/500';
         document.getElementById('sendBtn').disabled = !transcript.trim();
     };
@@ -525,6 +469,4 @@ function saveSetting() {
 function togglePanel() {
     isPanelOpen = !isPanelOpen;
     document.getElementById('panelContent').style.display = isPanelOpen ? 'block' : 'none';
-
 }
-
