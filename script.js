@@ -1,5 +1,5 @@
 // --- 全局变量定义 ---
-let rasaApiUrl = localStorage.getItem('rasaApiUrl') || "https://small-llamas-mate.loca.lt/webhooks/rest/webhook";
+let rasaApiUrl = localStorage.getItem('rasaApiUrl') || "https://cold-banks-write.loca.lt/webhooks/rest/webhook";
 const SENDER_ID = "test_user_" + Math.random().toString(36).substr(2, 8);
 let activeView = 'chat';
 let isPanelOpen = true;
@@ -527,3 +527,4 @@ function togglePanel() {
     document.getElementById('panelContent').style.display = isPanelOpen ? 'block' : 'none';
 
 }
+
