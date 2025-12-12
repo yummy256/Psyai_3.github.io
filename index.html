@@ -4,19 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI聊天室 - Judy</title>
-    <!-- 移除ECharts CDN（不再需要图表） -->
-    <!-- 引入样式文件 -->
+    <title>🥕AI 聊天室 - ❤️‍🩹Judy</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
+    <!-- 粒子特效容器 -->
+    <div id="particles-js"></div>
+
     <div class="app-container">
         <!-- 整体三栏布局 -->
         <div class="layout">
-            <!-- 左侧导航栏（新增清空按钮到底部） -->
+            <!-- 左侧导航栏 -->
             <div class="sidebar">
-                <div class="sidebar-header">AI聊天室</div>
+                <div class="sidebar-header">🥕AI 聊天室</div>
                 <div class="sidebar-item active" data-view="chat">
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -43,19 +44,17 @@
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="3"></circle>
                         <path
-                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
                         </path>
                     </svg>
                     设置
                 </div>
-                <!-- 清空对话按钮移到左侧列表底部 -->
-                <button class="clear-btn" onclick="clearChat()">
+
+                <!-- 清空对话按钮只在对话菜单显示 -->
+                <button class="clear-btn" id="clearChatBtn" style="display: none;">
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
-                        </path>
-                        <line x1="10" y1="11" x2="10" y2="17"></line>
-                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                     </svg>
                     清空对话
                 </button>
@@ -71,41 +70,32 @@
 
                 <!-- 对话视图（默认） -->
                 <div class="chat-view-container view active">
-                    <!-- 移除原左下角的清空按钮 -->
-
                     <!-- 聊天消息区 -->
                     <div class="chat-messages" id="chatMessages">
                         <!-- 欢迎消息 -->
                         <div class="message ai-message">
-                            <div class="avatar ai-avatar">🤖</div>
+                            <div class="avatar ai-avatar"></div>
                             <div class="message-content">
-                                <strong>Judy：</strong>
-                                <span>你好，我是Judy，一只会解忧的兔子，要和我聊聊吗~</span>
+                                <strong>❤️‍🩹Judy：</strong>
+                                <span>你好，我是Judy，一只会解忧的兔子，要和我聊聊吗🥕</span>
                             </div>
                         </div>
                         <!-- 消息列表由JS动态生成 -->
                     </div>
 
-                    <!-- 输入区（增大尺寸） -->
+                    <!-- 输入区 -->
                     <div class="chat-input">
-                        <input type="text" id="inputMessage" placeholder="点击输入，按Enter发送，Shift+Enter换行..."
-                            onkeydown="handleKeyDown(event)"
-                            onfocus="inputFocused = true; this.classList.add('input-focused')"
-                            onblur="inputFocused = false; this.classList.remove('input-focused')" maxlength="500">
-                        <!-- 语音输入按钮（增大尺寸） -->
-                        <button class="voice-btn" onclick="startVoiceInput()">
-                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <button class="voice-btn">
+                            <svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none"
+                                stroke="currentColor" stroke-width="2">
                                 <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
                                 <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
                                 <line x1="12" y1="19" x2="12" y2="23"></line>
                                 <line x1="8" y1="23" x2="16" y2="23"></line>
                             </svg>
                         </button>
-                        <button onclick="sendMessage()" class="send-btn" id="sendBtn" disabled>
-                            发送
-                        </button>
-                        <!-- 字数统计 -->
-                        <span class="word-count" id="wordCount">0/500</span>
+                        <textarea id="inputMessage" placeholder="输入消息..."></textarea>
+                        <button class="send-btn" id="sendBtn">发送</button>
                     </div>
                 </div>
 
@@ -118,7 +108,7 @@
                     </div>
                 </div>
 
-                <!-- 情感分析视图（替换图表为动态emoji） -->
+                <!-- 情感分析视图 -->
                 <div class="emotion-view view">
                     <h3>详细情感分析</h3>
                     <div class="emotion-stats">
@@ -135,9 +125,12 @@
                             <span class="stat-value" id="negativeRatio">0%</span>
                         </div>
                     </div>
-                    <!-- 替换饼图为核心心情emoji -->
-                    <div class="emotion-emoji-main" id="mainEmoji">😐</div>
-                    <!-- 替换趋势图为心情变化轨迹 -->
+                    <!-- 核心心情动图 -->
+                    <div class="emotion-emoji-main" id="mainEmoji">
+                        <img src="images/hehe.gif" alt="中性" class="emotion-gif">
+                    </div>
+
+                    <!-- 心情变化轨迹 -->
                     <div class="emotion-track" id="emotionTrack">
                         <span class="track-label">心情变化轨迹：</span>
                         <div class="track-emojis" id="trackEmojis">暂无消息</div>
@@ -155,7 +148,7 @@
                 </div>
             </div>
 
-            <!-- 右侧情感面板（替换折线图为动态emoji） -->
+            <!-- 右侧情感面板 -->
             <div class="right-panel">
                 <div class="panel-header">
                     <h3>情感分析</h3>
@@ -173,8 +166,10 @@
                             <span id="currentEmotion" class="neutral">中性</span>
                         </div>
                     </div>
-                    <!-- 核心心情emoji -->
-                    <div class="panel-emoji" id="panelEmoji">😐</div>
+                    <!-- 核心心情动图 -->
+                    <div class="panel-emoji" id="panelEmoji">
+                        <img src="images/hehe.gif" alt="中性" class="emotion-gif">
+                    </div>
                     <div class="emotion-recent">
                         <span class="recent-label">最近一条消息</span>
                         <div class="recent-emotion neutral" id="lastMessageEmotion">无</div>
@@ -187,7 +182,7 @@
                             <span class="dist-tag negative">消极</span>
                         </div>
                     </div>
-                    <!-- 移除原趋势图，新增最近心情轨迹 -->
+                    <!-- 最近心情轨迹 -->
                     <div class="panel-track">
                         <span class="track-label">最近心情：</span>
                         <div class="track-emojis" id="panelTrackEmojis">暂无</div>
@@ -197,7 +192,7 @@
         </div>
     </div>
 
-    <!-- 加载动画模板（JS动态插入） -->
+    <!-- 加载动画模板 -->
     <template id="loadingTemplate">
         <div class="loading">
             <div class="loading-spinner"></div>
@@ -205,6 +200,8 @@
         </div>
     </template>
 
+    <!-- 粒子特效库 -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     <!-- 引入JS文件 -->
     <script src="script.js"></script>
 </body>
