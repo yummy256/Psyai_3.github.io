@@ -4,7 +4,7 @@ let emotionData = [];
 let currentEmotion = '中性';
 let lastMessageEmotion = '中性';
 let historySessions = JSON.parse(localStorage.getItem('historySessions') || '[]');
-let rasaApiUrl = localStorage.getItem('rasaApiUrl') || 'http://localhost:5005/webhooks/rest/webhook';
+let rasaApiUrl = localStorage.getItem('rasaApiUrl') || 'https://brown-mobiles-exposed-currently.trycloudflare.com/webhooks/rest/webhook';
 let isLoading = false;
 let isPanelOpen = true;
 
