@@ -4,7 +4,7 @@ let emotionData = [];
 let currentEmotion = '中性';
 let lastMessageEmotion = '中性';
 let historySessions = JSON.parse(localStorage.getItem('historySessions') || '[]');
-let rasaApiUrl = localStorage.getItem('rasaApiUrl') || 'https://coordination-labs-liked-select.trycloudflare.com/webhooks/rest/webhook';
+let rasaApiUrl = localStorage.getItem('rasaApiUrl') || 'https://creature-causing-neon-insight.trycloudflare.com/webhooks/rest/webhook';
 let isLoading = false;
 let isPanelOpen = true;
 
@@ -36,19 +36,19 @@ const preferredChineseVoices = [
     'Microsoft Yunjian Online (Natural) - Chinese (Mainland)',
     'Microsoft Xiaoxiao - Chinese (Simplified, PRC)',
     'Microsoft Xiaoyan - Chinese (Simplified, PRC)',
-    
+
     // Google 高质量语音（Chrome浏览器）
     'Google 普通话（中国大陆）',
     'Google 普通话（中国大陆）',
-    
+
     // macOS/iOS 高质量语音
     'Ting-Ting', // 苹果的中文女声
     'Mei-Jia',   // 苹果的另一个中文女声
-    
+
     // Windows 系统语音
     'Microsoft Huihui Desktop - Chinese (Simplified)',
     'Microsoft Yaoyao - Chinese (Simplified)',
-    
+
     // 其他常见中文女声
     'zh-CN-XiaoxiaoNeural',
     'zh-CN-XiaoyiNeural',
@@ -60,19 +60,19 @@ const preferredChineseVoices = [
 
 // Judy语音配置（优化版）
 const judyVoiceProfiles = {
-    '积极': { 
+    '积极': {
         rate: 0.9,  // 稍微加快，但保持自然
         pitch: 1.2, // 音调稍高但不夸张
         volume: 0.5,
         intonation: 'rising'
     },
-    '中性': { 
+    '中性': {
         rate: 0.9,  // 适中语速
         pitch: 1.2, // 自然音调
         volume: 0.5,
         intonation: 'normal'
     },
-    '消极': { 
+    '消极': {
         rate: 0.9,  // 稍慢，表达关心
         pitch: 1.1, // 音调稍低，温暖
         volume: 0.9,
@@ -101,6 +101,32 @@ const naturalPauses = [
     '呢', '啊', '呀', '哦', '啦', '嘛', '嗯'
 ];
 
+// 需要过滤的特殊字符和表情符号
+const problematicChars = [
+    // 常见表情符号
+    '🌱', '🌿', '🍀', '🌸', '🌺', '🌻', '🌼', '🌷',
+    '😊', '😄', '😃', '😀', '😁', '😂', '🤣', '😅',
+    '😭', '😢', '😔', '😞', '😟', '😕', '🙁', '☹️',
+    // 其他可能影响语音合成的字符
+    '✨', '⭐', '🌟', '💫', '💖', '💕', '💞', '💓',
+    '💗', '💘', '💝', '💟', '💜', '💙', '💚', '💛',
+    '🧡', '❤️', '🖤', '🤍', '🤎', '💔', '💤', '💢',
+    '💬', '💭', '🗯️', '💯', '💥', '💦', '💨', '💫',
+    '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼',
+    '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔',
+    '🐧', '🐦', '🐤', '🐣', '🐥', '🦆', '🦅', '🦉',
+    '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🐛', '🦋',
+    '🐌', '🐞', '🐜', '🦗', '🕷️', '🦂', '🐢', '🐍',
+    '🦎', '🦖', '🦕', '🐙', '🦑', '🦐', '🦞', '🦀',
+    '🐡', '🐠', '🐟', '🐬', '🐳', '🐋', '🦈', '🐊',
+    '🐅', '🐆', '🦓', '🦍', '🦧', '🐘', '🦛', '🦏',
+    '🐪', '🐫', '🦒', '🦘', '🐃', '🐂', '🐄', '🐎',
+    '🐖', '🐏', '🐑', '🦙', '🐐', '🦌', '🐕', '🐩',
+    '🦮', '🐕‍🦺', '🐈', '🐈‍⬛', '🐓', '🦃', '🦤', '🦚',
+    '🦜', '🦢', '🦩', '🕊️', '🐇', '🦝', '🦨', '🦡',
+    '🦦', '🦥', '🐁', '🐀', '🐿️', '🦔'
+];
+
 // DOM元素
 const chatMessages = document.getElementById('chatMessages');
 const inputMessage = document.getElementById('inputMessage');
@@ -115,7 +141,7 @@ function init() {
 
     // 初始化语音识别
     initSpeechRecognition();
-    
+
     // 初始化文本转语音
     initTextToSpeech();
 
@@ -166,7 +192,7 @@ function init() {
     // 初始化情感显示
     updateEmotionDOM();
     updateEmojiDisplay();
-    
+
     // 加载TTS设置
     loadTTSSettings();
 }
@@ -244,40 +270,45 @@ function initParticles() {
     }
 }
 
-// 初始化文本转语音（增强版）
+// 初始化文本转语音（优化版）
 function initTextToSpeech() {
     if (!speechSynthesis) {
         console.warn('当前浏览器不支持文本转语音功能');
         showVoiceError('当前浏览器不支持语音功能');
         return;
     }
-    
-    // 等待语音加载
-    setTimeout(() => {
-        voices = speechSynthesis.getVoices();
-        
-        if (voices.length === 0) {
-            speechSynthesis.onvoiceschanged = function() {
-                voices = speechSynthesis.getVoices();
-                if (voices.length > 0) {
-                    setupVoiceSelection();
-                    console.log('语音加载完成，可用语音:', voices.map(v => v.name));
-                } else {
-                    console.warn('未找到可用语音');
-                    showVoiceError('未找到可用语音，请检查系统语音设置');
-                }
-            };
-        } else {
-            setupVoiceSelection();
-        }
-    }, 100);
-    
-    speechSynthesis.addEventListener('voiceschanged', function() {
-        voices = speechSynthesis.getVoices();
-        if (voices.length > 0 && !currentVoice) {
-            setupVoiceSelection();
-        }
-    });
+
+    // 立即获取语音列表
+    voices = speechSynthesis.getVoices();
+
+    // 如果有语音，立即设置
+    if (voices.length > 0) {
+        setupVoiceSelection();
+        console.log('语音加载完成，可用语音:', voices.map(v => v.name));
+    } else {
+        // 监听语音变化事件，但只监听一次
+        const onVoicesChanged = function () {
+            voices = speechSynthesis.getVoices();
+            if (voices.length > 0) {
+                setupVoiceSelection();
+                console.log('语音加载完成，可用语音:', voices.map(v => v.name));
+                speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
+            } else {
+                console.warn('未找到可用语音');
+                showVoiceError('未找到可用语音，请检查系统语音设置');
+            }
+        };
+
+        speechSynthesis.addEventListener('voiceschanged', onVoicesChanged);
+
+        // 设置一个超时，如果10秒内还没有加载语音，就提示
+        setTimeout(() => {
+            if (voices.length === 0) {
+                console.warn('语音加载超时');
+                showVoiceError('语音加载超时，请刷新页面重试');
+            }
+        }, 10000);
+    }
 }
 
 // 显示语音错误
@@ -286,13 +317,13 @@ function showVoiceError(message) {
     const errorDiv = document.createElement('div');
     errorDiv.className = 'voice-error-hint';
     errorDiv.innerHTML = `<span>⚠️ ${message}</span>`;
-    
+
     document.querySelector('.app-container').appendChild(errorDiv);
-    
+
     setTimeout(() => {
         errorDiv.classList.add('show');
     }, 10);
-    
+
     setTimeout(() => {
         errorDiv.classList.remove('show');
         setTimeout(() => {
@@ -306,7 +337,7 @@ function showVoiceError(message) {
 // 智能语音选择算法（重点改进）
 function setupVoiceSelection() {
     console.log('可用语音列表:', voices.map(v => `${v.name} (${v.lang})`));
-    
+
     // 1. 首先尝试使用用户之前选择的语音
     if (selectedVoiceName) {
         const savedVoice = voices.find(v => v.name === selectedVoiceName);
@@ -317,32 +348,32 @@ function setupVoiceSelection() {
             return;
         }
     }
-    
+
     // 2. 寻找高质量中文女性语音
     let bestVoice = null;
     let bestScore = -1;
-    
+
     voices.forEach(voice => {
         const score = calculateVoiceScore(voice);
         console.log(`语音评分: ${voice.name} - ${score}分`);
-        
+
         if (score > bestScore) {
             bestScore = score;
             bestVoice = voice;
         }
     });
-    
+
     if (bestVoice) {
         currentVoice = bestVoice;
         console.log('选择最佳语音:', currentVoice.name, `(评分: ${bestScore})`);
     } else if (voices.length > 0) {
         // 3. 降级选择：任何中文语音
-        const chineseVoice = voices.find(v => 
-            v.lang.startsWith('zh') || 
+        const chineseVoice = voices.find(v =>
+            v.lang.startsWith('zh') ||
             v.lang.includes('Chinese') ||
             v.name.includes('Chinese')
         );
-        
+
         if (chineseVoice) {
             currentVoice = chineseVoice;
             console.log('选择中文语音:', currentVoice.name);
@@ -356,7 +387,7 @@ function setupVoiceSelection() {
         console.warn('未找到可用语音');
         showVoiceError('未找到可用语音，请安装高质量语音包');
     }
-    
+
     updateVoiceSelector();
 }
 
@@ -365,7 +396,7 @@ function calculateVoiceScore(voice) {
     let score = 0;
     const name = voice.name.toLowerCase();
     const lang = voice.lang.toLowerCase();
-    
+
     // 语言加分
     if (lang.includes('zh-cn') || lang.includes('zh_hans')) {
         score += 30; // 简体中文最高优先级
@@ -374,39 +405,39 @@ function calculateVoiceScore(voice) {
     } else if (lang.includes('en')) {
         score += 5; // 英文备用
     }
-    
+
     // 语音质量关键词加分
     const qualityKeywords = [
         'neural', 'natural', 'premium', 'hd', 'online', 'azure',
         'xiaoxiao', 'xiaoyi', 'yunjian', 'xiaoyan', 'huihui', 'yaoyao'
     ];
-    
+
     qualityKeywords.forEach(keyword => {
         if (name.includes(keyword)) {
             score += 10;
         }
     });
-    
+
     // 厂商加分
     if (name.includes('microsoft')) score += 8;
     if (name.includes('google')) score += 6;
     if (name.includes('apple') || name.includes('ting')) score += 7;
-    
+
     // 语音类型加分（女性）
-    if (name.includes('female') || 
-        name.includes('xiaoxiao') || 
+    if (name.includes('female') ||
+        name.includes('xiaoxiao') ||
         name.includes('xiaoyi') ||
         name.includes('yaoyao') ||
         name.includes('huihui') ||
         name.includes('女')) {
         score += 15;
     }
-    
+
     // 系统默认语音减分
     if (name.includes('desktop') || name.includes('system') || name.includes('default')) {
         score -= 5;
     }
-    
+
     return score;
 }
 
@@ -417,7 +448,7 @@ function updateVoiceSelector() {
     if (voiceSelector && voices.length > 0) {
         // 保存当前选择
         voiceSelector.innerHTML = '';
-        
+
         // 添加选项
         voices.forEach((voice, index) => {
             const option = document.createElement('option');
@@ -428,7 +459,7 @@ function updateVoiceSelector() {
             }
             voiceSelector.appendChild(option);
         });
-        
+
         // 显示当前语音信息
         const voiceInfo = document.getElementById('currentVoiceInfo');
         if (voiceInfo && currentVoice) {
@@ -444,7 +475,7 @@ function loadTTSSettings() {
     voicePitch = parseFloat(localStorage.getItem('voicePitch')) || 1.2;
     voiceVolume = parseFloat(localStorage.getItem('voiceVolume')) || 0.8;
     selectedVoiceName = localStorage.getItem('selectedVoiceName') || '';
-    
+
     // 更新设置界面
     if (document.getElementById('ttsEnabled')) {
         document.getElementById('ttsEnabled').checked = ttsEnabled;
@@ -461,13 +492,13 @@ function loadTTSSettings() {
         document.getElementById('voiceVolume').value = voiceVolume;
         document.getElementById('voiceVolumeValue').textContent = voiceVolume.toFixed(1);
     }
-    
+
     // 显示语音控制栏
     const voiceControlBar = document.getElementById('voiceControlBar');
     if (voiceControlBar && ttsEnabled) {
         voiceControlBar.style.display = 'flex';
     }
-    
+
     // 更新语音选择器
     updateVoiceSelector();
 }
@@ -478,7 +509,7 @@ function saveTTSSettings() {
     voiceRate = parseFloat(document.getElementById('voiceRate').value);
     voicePitch = parseFloat(document.getElementById('voicePitch').value);
     voiceVolume = parseFloat(document.getElementById('voiceVolume').value);
-    
+
     // 保存选择的语音
     const voiceSelector = document.getElementById('voiceSelector');
     if (voiceSelector && voiceSelector.value !== '') {
@@ -489,33 +520,33 @@ function saveTTSSettings() {
             localStorage.setItem('selectedVoiceName', selectedVoiceName);
         }
     }
-    
+
     localStorage.setItem('ttsEnabled', ttsEnabled);
     localStorage.setItem('voiceRate', voiceRate);
     localStorage.setItem('voicePitch', voicePitch);
     localStorage.setItem('voiceVolume', voiceVolume);
-    
+
     // 显示语音控制栏
     const voiceControlBar = document.getElementById('voiceControlBar');
     if (voiceControlBar) {
         voiceControlBar.style.display = ttsEnabled ? 'flex' : 'none';
     }
-    
+
     alert('语音设置已保存！');
 }
 
 // 更新语音参数显示
 function updateVoiceSettingsDisplay() {
     if (document.getElementById('voiceRateValue')) {
-        document.getElementById('voiceRateValue').textContent = 
+        document.getElementById('voiceRateValue').textContent =
             document.getElementById('voiceRate').value;
     }
     if (document.getElementById('voicePitchValue')) {
-        document.getElementById('voicePitchValue').textContent = 
+        document.getElementById('voicePitchValue').textContent =
             document.getElementById('voicePitch').value;
     }
     if (document.getElementById('voiceVolumeValue')) {
-        document.getElementById('voiceVolumeValue').textContent = 
+        document.getElementById('voiceVolumeValue').textContent =
             document.getElementById('voiceVolume').value;
     }
 }
@@ -527,16 +558,16 @@ function applyVoicePreset(presetName) {
         'gentle': { rate: 1.1, pitch: 1.3, volume: 0.9 },
         'energetic': { rate: 1.5, pitch: 1.6, volume: 1.0 }
     };
-    
+
     const preset = presets[presetName] || presets.natural;
-    
+
     document.getElementById('voiceRate').value = preset.rate;
     document.getElementById('voicePitch').value = preset.pitch;
     document.getElementById('voiceVolume').value = preset.volume;
-    
+
     updateVoiceSettingsDisplay();
     saveTTSSettings();
-    
+
     alert(`已应用${presetName === 'natural' ? '自然' : presetName === 'gentle' ? '温柔' : '活力'}预设！`);
 }
 
@@ -546,10 +577,10 @@ function stopCurrentSpeech() {
         speechSynthesis.cancel();
         isSpeaking = false;
         currentUtterance = null;
-        
+
         updateAllPlayButtons();
         updateVoiceStatus('已停止');
-        
+
         document.querySelectorAll('.message-content-container.speech-active').forEach(el => {
             el.classList.remove('speech-active');
         });
@@ -564,166 +595,163 @@ function updateVoiceStatus(status) {
     }
 }
 
-// 自然文本处理
+// 自然文本处理（快速版）
 function processTextForSpeech(text, emotion) {
     let processed = text;
-    
-    // 移除过多的标点
-    processed = processed.replace(/!!+/g, '！');
-    processed = processed.replace(/\.\.+/g, '。');
-    
-    // 在适当位置添加自然停顿
-    const sentences = processed.split(/[。！？]/);
-    if (sentences.length > 1) {
-        processed = sentences.join('，');
+
+    // 快速过滤表情符号（使用正则表达式，更快）
+    const emojiRegex = /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{2B50}\u{1F004}\u{1F0CF}]/gu;
+    processed = processed.replace(emojiRegex, '');
+
+    // 移除HTML标签
+    processed = processed.replace(/<[^>]*>/g, '');
+
+    // 移除过多的标点（简化正则）
+    processed = processed.replace(/!{2,}/g, '！');
+    processed = processed.replace(/\.{2,}/g, '。');
+
+    // 如果过滤后为空，快速返回默认文本
+    if (!processed.trim()) {
+        return emotion === '消极' ? '我在听呢～' :
+            emotion === '积极' ? '太棒了！' :
+                '嗯...';
     }
-    
-    // 根据情感添加语气词
-    if (Math.random() > 0.6 && naturalExpressions[emotion]) {
-        const expressions = naturalExpressions[emotion];
-        const randomExp = expressions[Math.floor(Math.random() * expressions.length)];
-        
-        if (Math.random() > 0.5) {
-            processed = randomExp + ' ' + processed;
-        } else if (!processed.endsWith('！') && !processed.endsWith('？')) {
-            processed = processed + ' ' + randomExp;
-        }
-    }
-    
+
     return processed;
 }
 
-// 优化文本转语音（修复版）- 主要修复点
+// 优化文本转语音（快速触发版）
 function speakText(text, emotion = '中性') {
     if (!ttsEnabled || !speechSynthesis || !text.trim()) {
         console.log('语音功能未启用或文本为空');
         return;
     }
-    
+
     // 检查 speechSynthesis 是否可用
     if (!speechSynthesis) {
         console.warn('SpeechSynthesis 不可用');
         return;
     }
-    
+
+    // 停止当前语音
     stopCurrentSpeech();
-    
-    // 确保有可用语音
-    if (!currentVoice) {
-        if (voices.length === 0) {
+
+    // 立即开始处理，不延迟
+    try {
+        // 处理文本，过滤特殊字符
+        const processedText = processTextForSpeech(text, emotion);
+
+        // 如果处理后的文本为空，使用备用文本
+        if (!processedText.trim()) {
+            console.warn('文本处理结果为空，使用备用文本');
+            const fallbackText = emotion === '消极' ? '别难过，我在这里呢～' :
+                emotion === '积极' ? '真为你开心！' :
+                    '嗯，我明白你的意思～';
+            speakText(fallbackText, emotion);
+            return;
+        }
+
+        // 确保有可用语音
+        if (!currentVoice || voices.length === 0) {
             voices = speechSynthesis.getVoices();
             if (voices.length === 0) {
-                console.warn('语音列表为空');
-                setTimeout(() => {
-                    voices = speechSynthesis.getVoices();
-                    if (voices.length > 0) {
-                        setupVoiceSelection();
-                        // 递归调用，使用当前文本和情感
-                        speakText(text, emotion);
-                    }
-                }, 500);
-                return;
+                // 立即尝试重新获取语音列表
+                voices = speechSynthesis.getVoices();
+                if (voices.length === 0) {
+                    console.warn('语音列表为空，无法朗读');
+                    return;
+                }
             }
+            setupVoiceSelection();
         }
-        setupVoiceSelection();
-    }
-    
-    if (!currentVoice) {
-        console.warn('没有可用语音');
-        showVoiceError('没有可用的语音，请安装中文语音包');
-        return;
-    }
-    
-    try {
-        // 处理文本，使其更自然
-        const processedText = processTextForSpeech(text, emotion);
-        
+
+        if (!currentVoice) {
+            console.warn('没有可用语音');
+            return;
+        }
+
         // 创建语音实例
         const utterance = new SpeechSynthesisUtterance(processedText);
-        
+
         // 设置语音参数
         utterance.voice = currentVoice;
         utterance.lang = 'zh-CN';
-        
+
         // 获取情感配置
         const emotionProfile = judyVoiceProfiles[emotion] || judyVoiceProfiles['中性'];
-        
-        // 应用更自然的参数
-        utterance.rate = Math.max(0.8, Math.min(1.8, voiceRate * emotionProfile.rate));
-        utterance.pitch = Math.max(0.8, Math.min(1.8, voicePitch * emotionProfile.pitch));
-        utterance.volume = Math.max(0.1, Math.min(1.0, voiceVolume * emotionProfile.volume));
-        
+
+        // 应用参数，设置合理范围
+        utterance.rate = Math.max(0.8, Math.min(1.5, voiceRate * emotionProfile.rate));
+        utterance.pitch = Math.max(0.8, Math.min(1.5, voicePitch * emotionProfile.pitch));
+        utterance.volume = Math.max(0.3, Math.min(1.0, voiceVolume * emotionProfile.volume));
+
         // 保存当前 utterance 的引用
         currentUtterance = utterance;
-        
-        // 事件处理 - 使用箭头函数保持上下文
+
+        // 事件处理
         utterance.onstart = () => {
             console.log('开始播放:', processedText.substring(0, 50));
             isSpeaking = true;
             updateVoiceStatus('Judy在说话...');
             updateAllPlayButtons();
-            
+
             const currentPlayBtn = document.querySelector(`.message-play-btn[data-text="${encodeURIComponent(text)}"]`);
             if (currentPlayBtn) {
                 currentPlayBtn.classList.add('playing');
                 currentPlayBtn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>';
                 currentPlayBtn.title = '正在播放...';
-                
+
                 const messageContainer = currentPlayBtn.closest('.message-content-container');
                 if (messageContainer) {
                     messageContainer.classList.add('speech-active');
                 }
             }
         };
-        
+
         utterance.onend = () => {
             console.log('语音播放结束');
             isSpeaking = false;
-            // 只有当前 utterance 是正在播放的 utterance 时才清除
             if (currentUtterance === utterance) {
                 currentUtterance = null;
             }
             updateVoiceStatus('语音就绪');
             updateAllPlayButtons();
-            
+
             document.querySelectorAll('.message-content-container.speech-active').forEach(el => {
                 el.classList.remove('speech-active');
             });
         };
-        
+
         utterance.onerror = (event) => {
             console.error('语音播放错误:', event.error);
+
+            // 忽略中断错误
+            if (event.error === 'interrupted' || event.error === 'canceled') {
+                console.log('语音播放被中断');
+                return;
+            }
+
             isSpeaking = false;
-            // 只有当前 utterance 是正在播放的 utterance 时才清除
             if (currentUtterance === utterance) {
                 currentUtterance = null;
             }
             updateVoiceStatus('播放错误');
             updateAllPlayButtons();
-            
-            // 不显示中断错误
-            if (event.error !== 'interrupted') {
-                showVoiceError(`语音播放失败: ${event.error}`);
-            }
-            
+
             document.querySelectorAll('.message-content-container.speech-active').forEach(el => {
                 el.classList.remove('speech-active');
             });
         };
-        
-        // 播放语音 - 使用 Promise 确保顺序
-        setTimeout(() => {
-            try {
-                speechSynthesis.speak(utterance);
-            } catch (error) {
-                console.error('语音合成失败:', error);
-                showVoiceError('语音合成失败，请刷新页面重试');
-            }
-        }, 50);
-        
+
+        // 立即播放，不使用延迟
+        try {
+            speechSynthesis.speak(utterance);
+        } catch (error) {
+            console.error('语音合成失败:', error);
+        }
+
     } catch (error) {
-        console.error('创建语音实例失败:', error);
-        showVoiceError('创建语音失败');
+        console.error('语音合成过程异常:', error);
     }
 }
 
@@ -734,7 +762,7 @@ function testVoice(voiceType = 'default') {
         emotion: '今天天气真好，要不要一起聊聊天？',
         comfort: '别难过啦，无论发生什么我都会陪着你的～'
     };
-    
+
     const text = testTexts[voiceType] || testTexts.default;
     speakText(text, voiceType === 'comfort' ? '消极' : '积极');
 }
@@ -758,7 +786,7 @@ function refreshVoices() {
 function initSpeechRecognition() {
     // 检查浏览器是否支持语音识别
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    
+
     if (!SpeechRecognition) {
         console.warn('当前浏览器不支持语音识别功能');
         voiceBtn.style.display = 'none'; // 隐藏麦克风按钮
@@ -772,22 +800,22 @@ function initSpeechRecognition() {
     recognition.lang = 'zh-CN'; // 设置语言为中文
 
     // 语音识别开始事件
-    recognition.onstart = function() {
+    recognition.onstart = function () {
         console.log('语音识别开始...');
         isRecording = true;
         voiceBtn.classList.add('recording');
-        
+
         // 清空之前的转录文本
         finalTranscript = '';
-        
+
         // 显示语音识别提示
         const voiceHint = document.getElementById('voiceRecordingHint');
         if (voiceHint) voiceHint.classList.add('show');
-        
+
         // 清空输入框，准备接收语音输入
         inputMessage.value = '';
         checkSendButton();
-        
+
         // 清除之前的定时器
         if (voiceInputTimer) {
             clearTimeout(voiceInputTimer);
@@ -796,9 +824,9 @@ function initSpeechRecognition() {
     };
 
     // 语音识别结果事件
-    recognition.onresult = function(event) {
+    recognition.onresult = function (event) {
         let interimTranscript = '';
-        
+
         for (let i = event.resultIndex; i < event.results.length; i++) {
             const transcript = event.results[i][0].transcript;
             if (event.results[i].isFinal) {
@@ -807,13 +835,13 @@ function initSpeechRecognition() {
                 interimTranscript += transcript;
             }
         }
-        
+
         // 实时显示识别结果
         if (interimTranscript) {
             inputMessage.value = finalTranscript + interimTranscript;
             checkSendButton();
         }
-        
+
         // 当有最终结果时，显示完整文本
         if (finalTranscript) {
             inputMessage.value = finalTranscript;
@@ -822,28 +850,28 @@ function initSpeechRecognition() {
     };
 
     // 语音识别结束事件
-    recognition.onend = function() {
+    recognition.onend = function () {
         console.log('语音识别结束');
         isRecording = false;
         voiceBtn.classList.remove('recording');
-        
+
         // 隐藏语音识别提示
         const voiceHint = document.getElementById('voiceRecordingHint');
         if (voiceHint) voiceHint.classList.remove('show');
-        
+
         // 如果有最终结果，放入输入框让用户确认
         if (finalTranscript.trim()) {
             inputMessage.value = finalTranscript;
             checkSendButton();
-            
+
             // 输入框获得焦点，方便用户编辑
             inputMessage.focus();
-            
+
             // 如果输入框有内容，滚动到光标位置
             if (inputMessage.value) {
                 inputMessage.scrollTop = inputMessage.scrollHeight;
             }
-            
+
             // 显示确认提示
             showVoiceInputConfirmation();
         } else {
@@ -853,15 +881,15 @@ function initSpeechRecognition() {
     };
 
     // 语音识别错误事件
-    recognition.onerror = function(event) {
+    recognition.onerror = function (event) {
         console.error('语音识别错误:', event.error);
         isRecording = false;
         voiceBtn.classList.remove('recording');
-        
+
         // 隐藏语音识别提示
         const voiceHint = document.getElementById('voiceRecordingHint');
         if (voiceHint) voiceHint.classList.remove('show');
-        
+
         // 显示错误提示
         if (event.error === 'not-allowed') {
             alert('请允许浏览器使用麦克风权限');
@@ -882,29 +910,29 @@ function showVoiceInputConfirmation() {
         <button class="voice-confirm-btn">发送</button>
         <button class="voice-cancel-btn">取消</button>
     `;
-    
+
     // 添加到页面
     document.querySelector('.app-container').appendChild(confirmationDiv);
-    
+
     // 显示提示
     setTimeout(() => {
         confirmationDiv.classList.add('show');
     }, 10);
-    
+
     // 发送按钮事件
-    confirmationDiv.querySelector('.voice-confirm-btn').addEventListener('click', function() {
+    confirmationDiv.querySelector('.voice-confirm-btn').addEventListener('click', function () {
         sendMessage();
         hideVoiceInputConfirmation(confirmationDiv);
     });
-    
+
     // 取消按钮事件
-    confirmationDiv.querySelector('.voice-cancel-btn').addEventListener('click', function() {
+    confirmationDiv.querySelector('.voice-cancel-btn').addEventListener('click', function () {
         // 清空输入框
         inputMessage.value = '';
         checkSendButton();
         hideVoiceInputConfirmation(confirmationDiv);
     });
-    
+
     // 5秒后自动隐藏
     voiceInputTimer = setTimeout(() => {
         hideVoiceInputConfirmation(confirmationDiv);
@@ -921,7 +949,7 @@ function hideVoiceInputConfirmation(confirmationDiv) {
             }
         }, 300);
     }
-    
+
     if (voiceInputTimer) {
         clearTimeout(voiceInputTimer);
         voiceInputTimer = null;
@@ -933,13 +961,13 @@ function showVoiceInputNoSpeech() {
     const noSpeechDiv = document.createElement('div');
     noSpeechDiv.className = 'voice-nospeech-hint';
     noSpeechDiv.innerHTML = `<span>未检测到语音，请重试</span>`;
-    
+
     document.querySelector('.app-container').appendChild(noSpeechDiv);
-    
+
     setTimeout(() => {
         noSpeechDiv.classList.add('show');
     }, 10);
-    
+
     // 2秒后自动隐藏
     setTimeout(() => {
         noSpeechDiv.classList.remove('show');
@@ -954,12 +982,12 @@ function showVoiceInputNoSpeech() {
 // 切换语音识别状态
 function toggleSpeechRecognition() {
     const voiceHint = document.getElementById('voiceRecordingHint');
-    
+
     if (!recognition) {
         alert('当前浏览器不支持语音识别功能');
         return;
     }
-    
+
     if (isRecording) {
         // 停止录音
         recognition.stop();
@@ -1034,7 +1062,7 @@ function sendMessage() {
     getAIResponse(content);
 }
 
-// 获取AI回复
+// 获取AI回复（优化版 - 快速语音触发）
 function getAIResponse(content) {
     fetch(rasaApiUrl, {
         method: 'POST',
@@ -1050,8 +1078,10 @@ function getAIResponse(content) {
         .then(data => {
             isLoading = false;
 
+            let aiMessage;
+
             if (data && data.length > 0) {
-                const aiMessage = {
+                aiMessage = {
                     role: 'ai',
                     content: data[0].text,
                     timestamp: new Date().toISOString()
@@ -1060,37 +1090,28 @@ function getAIResponse(content) {
                 // 分析AI回复的情感
                 const emotion = analyzeEmotion(data[0].text);
                 aiMessage.emotion = emotion;
-
-                messages.push(aiMessage);
-                
-                // 如果TTS启用，自动播放AI回复
-                if (ttsEnabled) {
-                    // 延迟播放，让消息先显示出来
-                    setTimeout(() => {
-                        speakText(data[0].text, emotion);
-                    }, 800);
-                }
             } else {
                 // 默认回复
-                const aiMessage = {
+                aiMessage = {
                     role: 'ai',
                     content: '抱歉，我没太明白你的意思，可以再说一遍吗？',
                     timestamp: new Date().toISOString(),
                     emotion: '中性'
                 };
-                messages.push(aiMessage);
                 analyzeEmotion(aiMessage.content); // 分析默认回复的情感
-                
-                // 如果TTS启用，自动播放默认回复
-                if (ttsEnabled) {
-                    setTimeout(() => {
-                        speakText(aiMessage.content, '中性');
-                    }, 800);
-                }
             }
 
+            // 添加消息
+            messages.push(aiMessage);
+
+            // 立即渲染消息
             renderMessages();
             scrollToBottom();
+
+            // 如果TTS启用，立即播放AI回复（不延迟）
+            if (ttsEnabled) {
+                speakText(aiMessage.content, aiMessage.emotion);
+            }
         })
         .catch(error => {
             console.error('API请求失败:', error);
@@ -1104,16 +1125,15 @@ function getAIResponse(content) {
             };
             messages.push(errorMessage);
             analyzeEmotion(errorMessage.content); // 分析错误消息的情感
-            
-            // 如果TTS启用，自动播放错误回复
-            if (ttsEnabled) {
-                setTimeout(() => {
-                    speakText(errorMessage.content, '消极');
-                }, 800);
-            }
 
+            // 立即渲染消息
             renderMessages();
             scrollToBottom();
+
+            // 如果TTS启用，立即播放错误回复
+            if (ttsEnabled) {
+                speakText(errorMessage.content, '消极');
+            }
         });
 }
 
@@ -1286,24 +1306,24 @@ function renderMessages() {
             playButton = document.createElement('button');
             playButton.className = 'message-play-btn';
             playButton.setAttribute('data-text', encodeURIComponent(msg.content));
-            
+
             // 检查是否正在播放这条消息
-            const isPlayingThis = isSpeaking && currentUtterance && 
+            const isPlayingThis = isSpeaking && currentUtterance &&
                 decodeURIComponent(currentUtterance.text || '') === msg.content;
-            
-            playButton.innerHTML = isPlayingThis ? 
-                '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>' : 
+
+            playButton.innerHTML = isPlayingThis ?
+                '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>' :
                 '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
             playButton.title = isPlayingThis ? '正在播放...' : '播放Judy语音';
-            
+
             if (isPlayingThis) {
                 playButton.classList.add('playing');
             }
-            
+
             // 添加播放事件
-            playButton.addEventListener('click', function(e) {
+            playButton.addEventListener('click', function (e) {
                 e.stopPropagation();
-                
+
                 if (isPlayingThis) {
                     // 如果正在播放这条消息，停止播放
                     stopCurrentSpeech();
@@ -1319,12 +1339,12 @@ function renderMessages() {
         contentEl.appendChild(spanEl);
         contentContainer.appendChild(contentEl);
         contentContainer.appendChild(emotionEmojiEl);
-        
+
         // 如果是AI消息，添加播放按钮
         if (playButton) {
             contentContainer.appendChild(playButton);
         }
-        
+
         messageEl.appendChild(avatarEl);
         messageEl.appendChild(contentContainer);
 
@@ -1515,6 +1535,4 @@ function togglePanel() {
 }
 
 // 页面加载完成后初始化
-
 window.addEventListener('DOMContentLoaded', init);
-
